@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from "react-native";
 
-export default class WriteStoryScreen extends React.Component {
+export default class ReadStoryScreen extends React.Component {
   render() {
     return (
       <ScrollView>
