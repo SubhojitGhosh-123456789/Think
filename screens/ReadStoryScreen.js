@@ -1,44 +1,102 @@
 import React from "react";
 import {
-  Text,
   View,
-  TouchableOpacity,
+  Text,
+  FlatList,
   TextInput,
-  Image,
+  TouchableOpacity,
   StyleSheet,
-  Button,
   ScrollView,
 } from "react-native";
+import { Card, SearchBar } from "react-native-elements";
+import db from "../config";
 
 export default class ReadStoryScreen extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      book: [],
+      search: "",
+      lastVisibleStory: null,
+    };
+  }
+
+  componentDidMount = () => {
+    this.fetchMoreStories();
+  };
+
+  fetchMoreStories = async () => {
+    const allStories = await db.collection("Stories").limit(10).get();
+
+    allStories.docs.map((doc) => {
+      this.setState({
+        book: [...this.state.book, doc.data()],
+        lastVisibleStory: doc,
+      });
+    });
+  };
+
+  searchFilterFunction = async (text) => {
+    const story = await db
+      .collection("Stories")
+      .where("Title", "==", text)
+      .get();
+    story.docs.map((doc) => {
+      this.setState({
+        book: [doc.data()],
+        lastVisibleStory: doc,
+      });
+    });
+
+    console.log(this.state.book);
+  };
+
   render() {
     return (
       <ScrollView>
-        <View style={{ marginTop: 20, marginBottom: 20 }}>
-          <Text style={styles.text}>Think 🤔</Text>
-        </View>
+        <View style={styles.container}>
+          <View style={{ marginTop: 20 }}>
+            <Text style={styles.text}>Think 🤔</Text>
+          </View>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 30,
+              fontWeight: "bold",
+              color: "rgb(255,51,51)",
+              marginBottom: 20,
+            }}
+          >
+            Read A Story
+          </Text>
+          <SearchBar
+            round
+            searchIcon={{ size: 20 }}
+            onChangeText={(text) => {
+              if (text === "") {
+                this.fetchMoreStories();
+                this.setState({ search: text });
+              } else {
+                this.setState({ search: text });
+                this.searchFilterFunction(text);
+              }
+            }}
+            placeholder="Search A Story"
+            value={this.state.search}
+          />
 
-        <Text
-          style={{
-            textAlign: "center",
-            fontSize: 30,
-            fontWeight: "bold",
-            color: "rgb(255,51,51)",
-          }}
-        >
-          Read A Story
-        </Text>
-        <View
-          style={{
-            flexDirection: "row",
-            alignSelf: "center",
-            alignItems: "center",
-          }}
-        >
-          <TextInput style={styles.inputBox} placeholder="Search Story" />
-          <TouchableOpacity style={styles.submitButton}>
-            <Text style={styles.submitButtonText}>🔍</Text>
-          </TouchableOpacity>
+          <FlatList
+            data={this.state.book}
+            renderItem={({ item }) => (
+              <View style={{ marginTop: 10 }}>
+                <Card>
+                  <Text>{"Title: " + item.Title}</Text>
+                  <Text>{"Author: " + item.Author}</Text>
+                </Card>
+              </View>
+            )}
+          />
         </View>
       </ScrollView>
     );
@@ -48,36 +106,6 @@ export default class ReadStoryScreen extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  inputBox: {
-    marginLeft: 10,
-    width: 280,
-    height: 50,
-    borderRadius: 10,
-    borderWidth: 1,
-    textAlign: "center",
-    backgroundColor: "white",
-    borderWidth: 3.5,
-    borderColor: "magenta",
-    margin: 10,
-    alignSelf: "center",
-  },
-  submitButton: {
-    alignItems: "center",
-    alignSelf: "center",
-    backgroundColor: "#728cd4",
-    width: 50,
-    borderRadius: 100,
-    height: 50,
-  },
-  submitButtonText: {
-    textAlign: "center",
-    fontSize: 30,
-    color: "white",
-    fontWeight: "bold",
   },
   text: {
     backgroundColor: "blue",
